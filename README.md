@@ -60,8 +60,11 @@ It supports detection of nested tables and automatically reorganizes them into r
 Author
 
 Name: xmfldksl
+
 Email: xmfldksl@gmail.com
+
 GitHub: https://github.com/xmfldksl
+
 
 License
 
@@ -132,8 +135,11 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 제작자
 
 이름: xmfldksl
+
 이메일: xmfldksl@gmail.com
+
 깃허브: https://github.com/xmfldksl
+
 
 라이선스
 
