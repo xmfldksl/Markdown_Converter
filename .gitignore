@@ -205,3 +205,8 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# --- Conversion Test Outputs (Track source code only) ---
+*.pdf
+*.md
+!README.md  # Keep README.md tracked
