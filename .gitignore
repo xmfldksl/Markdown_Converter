@@ -210,3 +210,7 @@ __marimo__/
 *.pdf
 *.md
 !README.md  # Keep README.md tracked
+
+# etc
+py_history/
+md_Save/
