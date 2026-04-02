@@ -1,28 +1,33 @@
 # --- Python Temporary Files ---
 __pycache__/
-*.py[cod]
+*.py[codz]
 *$py.class
 .venv/
 venv/
 env/
 
-# --- PyInstaller Build Files (Generated during EXE creation) ---
+# --- PyInstaller & Build Files ---
 build/
 dist/
 *.spec
+*.egg-info/
+.eggs/
 
-# --- Conversion Test Outputs (Track source code only) ---
-*.pdf
-*.md
-!README.md  # Keep README.md tracked
-
-# --- OS and IDE Specific Settings ---
-.DS_Store
-Thumbs.db
+# --- IDE & OS Specific Settings ---
 .vscode/
 .idea/
+.DS_Store
+Thumbs.db
 
-# etc
+# --- Conversion Test Outputs ---
+*.pdf
+*.md
+!README.md
+
+# --- etc ---
 py_history/
 md_Save/
-tests/
+/tests/sample.pdf
+
+# --- Environment & Secrets ---
+.env
