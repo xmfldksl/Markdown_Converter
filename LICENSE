@@ -3,7 +3,7 @@
 Copyright (c) 2026 xmfldksl
 All rights reserved. Distributed under the MIT License.
 
-##PDF to Markdown Converter
+##Markdown Converter
 
 This software uses the following open-source libraries:
 
@@ -14,6 +14,26 @@ This software uses the following open-source libraries:
 2. **pdfminer.six**
    - License: MIT License
    - Copyright (c) 2004-2024 Yusuke Shinyama and contributors
+
+3. **pandas**
+   - License: BSD 3-Clause License
+   - Copyright (c) 2008-2011, AQR Capital Management, LLC, Lambda Foundry, Inc. and PyData Development Team.
+   - Copyright (c) 2011-2026, Open source contributors.
+
+4. **openpyxl**
+   - License: MIT License
+   - Copyright (c) 2010 openpyxl
+
+5. **pyxlsb**
+   - License: MIT License
+
+6. **python-pptx**
+   - License: MIT License
+   - Copyright (c) 2013 Steve Canny, http://scanny.org
+
+7. **tabulate**
+   - License: MIT License
+   - Copyright (c) Sergey Astanin
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -40,7 +60,7 @@ SOFTWARE.
 Copyright (c) 2026 xmfldksl
 모든 권리는 제작자에게 있으며, MIT 라이선스 규정에 따라 사용 및 배포를 허용합니다.
 
-##PDF to Markdown Converter
+##Markdown Converter
 
 본 소프트웨어는 다음과 같은 오픈 소스 라이브러리를 사용합니다:
 
@@ -51,6 +71,25 @@ Copyright (c) 2026 xmfldksl
 2. **pdfminer.six**
    - 라이선스: MIT License
    - 저작권: Copyright (c) 2004-2024 Yusuke Shinyama 및 기여자 일동
+
+3. **pandas**
+   - 라이선스: BSD 3-Clause License
+   - 저작권: Copyright (c) 2008-2011, AQR Capital Management, LLC, Lambda Foundry, Inc. and PyData Development Team. / Copyright (c) 2011-2026, Open source contributors.
+
+4. **openpyxl**
+   - 라이선스: MIT License
+   - 저작권: Copyright (c) 2010 openpyxl
+
+5. **pyxlsb**
+   - 라이선스: MIT License
+
+6. **python-pptx**
+   - 라이선스: MIT License
+   - 저작권: Copyright (c) 2013 Steve Canny
+
+7. **tabulate**
+   - 라이선스: MIT License
+   - 저작권: Copyright (c) Sergey Astanin
 
 본 소프트웨어 및 관련 문서 파일(이하 "소프트웨어")의 복제본을 보유하게 되는 모든 개인에게는, 
 소프트웨어를 제한 없이 사용할 수 있는 권한이 무상으로 부여됩니다. 
