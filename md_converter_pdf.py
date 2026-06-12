@@ -31,6 +31,41 @@ def get_safe_bbox(bbox, page_width, page_height):
         return None # None 객체를 반환합니다.
     return (x0, top, x1, bottom) # 최종 좌표를 튜플 형태로 묶어 반환합니다.
 
+def build_edge_settings(page, margin=3):
+    # 좌우 테두리가 투명한 표의 양쪽 끝 열 누락을 막기 위해, 수평선의 양 끝 좌표에 가상 수직선을 주입하는 표 탐지 설정을 생성하는 함수를 정의합니다.
+    base_tables = page.find_tables() # 기본 설정으로 1차 표 탐지를 수행하여 표 영역 후보를 확보합니다.
+    if not base_tables: # 페이지에 표가 하나도 없다면.
+        return None # 보정이 불필요하므로 None을 반환합니다.
+
+    h_edges = [e for e in page.edges if e["orientation"] == "h"] # 선과 사각형에서 추출된 모든 수평 성분을 수집합니다.
+    synthetic_lines = [] # 주입할 가상 수직선들을 담을 빈 리스트를 생성합니다.
+    for t in base_tables: # 탐지된 표 영역들을 하나씩 순회합니다.
+        x0, top, x1, bottom = t.bbox # 표 영역의 좌표 4개를 분리하여 저장합니다.
+        local_edges = [e for e in h_edges if top - margin <= e["top"] <= bottom + margin] # 해당 표의 세로 범위에 속한 수평선만 골라냅니다.
+        if not local_edges: # 수평선이 전혀 없는 표라면.
+            continue # 기준 좌표를 만들 수 없으므로 건너뜁니다.
+
+        edge_x_min = min(e["x0"] for e in local_edges) # 수평선들의 좌측 최소 x좌표를 계산합니다.
+        edge_x_max = max(e["x1"] for e in local_edges) # 수평선들의 우측 최대 x좌표를 계산합니다.
+        for x in (edge_x_min, edge_x_max): # 좌측 끝과 우측 끝 두 위치를 각각 처리합니다.
+            synthetic_lines.append({ # 표의 세로 범위만큼만 이어지는 가상 수직선 객체를 추가합니다.
+                "object_type": "line", # pdfplumber가 선 객체로 인식하도록 유형을 지정합니다.
+                "x0": x, "x1": x, # 수직선이므로 시작과 끝의 x좌표를 동일하게 설정합니다.
+                "top": top - margin, "bottom": bottom + margin, # 표의 상단부터 하단까지 약간의 여유를 두고 연장합니다.
+                "y0": page.height - (bottom + margin), # PDF 좌표계 기준의 하단 y좌표를 계산하여 기록합니다.
+                "y1": page.height - (top - margin), # PDF 좌표계 기준의 상단 y좌표를 계산하여 기록합니다.
+                "width": 0, # 수직선의 가로 폭은 0으로 지정합니다.
+                "height": (bottom - top) + 2 * margin, # 선의 세로 길이를 계산하여 기록합니다.
+            })
+
+    if not synthetic_lines: # 주입할 가상 수직선이 하나도 만들어지지 않았다면.
+        return None # 기본 탐지 방식을 그대로 사용하도록 None을 반환합니다.
+    return { # 기존 괘선 탐지에 가상 수직선을 추가로 결합하는 설정 딕셔너리를 반환합니다.
+        "vertical_strategy": "lines", # 수직 경계는 기존 괘선 기반 탐지를 유지합니다.
+        "horizontal_strategy": "lines", # 수평 경계도 기존 괘선 기반 탐지를 유지합니다.
+        "explicit_vertical_lines": synthetic_lines, # 양쪽 끝 보정용 가상 수직선 목록을 명시적으로 주입합니다.
+    }
+
 def extract_sequential_content(pdf_path, progress_callback=None):
     # PDF 경로를 받아 텍스트와 표를 추출하고 마크다운 문자열로 반환하는 메인 추출 함수를 정의합니다.
     md_output = "" # 최종 결과물이 누적될 빈 텍스트 문자열을 초기화합니다.
@@ -39,7 +74,8 @@ def extract_sequential_content(pdf_path, progress_callback=None):
         
         for i, page in enumerate(pdf.pages): # 첫 번째 페이지부터 마지막 페이지까지 순서대로 반복문을 실행합니다.
             page = page.dedupe_chars(tolerance=2) # 중복을 제거합니다.
-            all_tables = page.find_tables() # 모든 표 객체를 탐색하여 리스트로 가져옵니다.
+            edge_settings = build_edge_settings(page) # 투명 테두리 보정용 표 탐지 설정을 생성합니다.
+            all_tables = page.find_tables(edge_settings) if edge_settings else page.find_tables() # 보정 설정이 있다면 적용하고, 없다면 기본 방식으로 모든 표 객체를 탐색합니다.
             all_bboxes = [t.bbox for t in all_tables] # 테두리 좌표값만 별도로 뽑아내어 리스트를 만듭니다.
 
             child_info = {} # 빈 딕셔너리를 생성합니다.

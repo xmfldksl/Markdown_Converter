@@ -1,4 +1,4 @@
-# Markdown Converter v1.2
+# Markdown Converter v1.21
 
 ## Overview
 
@@ -42,11 +42,14 @@ python md_converter_main.py
   * **Windows Only:** No Python installation is required if you download the compiled package.
   * **Download:** Visit the [Releases](https://github.com/xmfldksl/Markdown_Converter/releases) page to download the latest executable zip archive (Extract the archive and run the executable file while keeping the `_internal` directory).
 
-## Release Notes (v1.2)
+## Release Notes (v1.21)
 
   * **Engine Modularity:** Separated core logic into `md_converter_main.py`, `md_converter_pdf.py`, `md_converter_xlsx.py`, and `md_converter_pptx.py`.
   * **Excel Integration:** Added support for standard `.xlsx` and binary `.xlsb` files using streaming and chunking methods.
   * **PowerPoint Integration:** Added support for extracting text and tables directly from `.pptx` slides.
+  * **UI/UX Enhancement:** Unified UI to support multiple formats dynamically and improved progress tracking.
+  * **Performance Optimization:** Distributed deployment with an `_internal` folder architecture to prevent launch delays and maximize UI responsiveness.
+  * **PDF Module Hotfix:** Fixed bugs related to table boundary coordinates and enhanced text extraction filters.
 
 ## Limitations
 
@@ -63,7 +66,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 -----
 
-# Markdown Converter v1.2
+# Markdown Converter v1.21
 
 ## 개요
 
@@ -107,11 +110,14 @@ python md_converter_main.py
   * **Windows 전용:** 배포된 패키지 압축 파일을 사용할 경우 파이썬 설치가 필요 없습니다.
   * **다운로드:** [Releases](https://github.com/xmfldksl/Markdown_Converter/releases) 페이지에서 최신 실행 패키지 압축 파일(.zip)을 다운로드하세요 (압축 해제 후 `_internal` 폴더가 유지된 상태에서 실행 파일을 작동해야 합니다).
 
-## v1.2 업데이트 내역
+## v1.21 업데이트 내역
 
   * **엔진 모듈화:** 코드를 `md_converter_main.py`, `md_converter_pdf.py`, `md_converter_xlsx.py`, `md_converter_pptx.py`로 분할하여 확장성을 확보했습니다.
   * **엑셀 지원 추가:** `.xlsx` 및 `.xlsb` 바이너리 파일 변환 기능이 추가되었습니다.
   * **파워포인트 지원 추가:** `.pptx` 슬라이드 내부 텍스트 및 표 추출 기능이 추가되었습니다.
+  * **UI/UX 개선:** 여러 확장자를 처리할 수 있도록 메인 화면이 개편되었으며 진행률 연동이 최적화되었습니다.
+  * **구동 성능 최적화:** `_internal` 폴더 분리형 배포 구조를 채택하여, 실행 초기 지연 현상을 차단하고 프로그램 응답 속도를 최대화했습니다.
+  * **PDF 모듈 핫픽스:** 표 경계선 좌표 인식 알고리즘을 수정하고 텍스트 추출 필터 기능을 강화했습니다.
 
 ## 제한 사항
 

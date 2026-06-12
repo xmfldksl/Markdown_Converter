@@ -13,7 +13,7 @@ class MDConverterApp:
     def __init__(self, root):
         # 그래픽 프로그램 창이 처음 생성될 때 실행되는 초기화 전용 생성자 함수입니다.
         self.root = root # 넘겨받은 메인 윈도우 인스턴스 객체를 클래스 전역에서 사용할 수 있도록 변수에 할당합니다.
-        self.root.title("Markdown Converter v1.2") # 윈도우 창 좌측 상단에 표시될 프로그램의 버전 타이틀 문구를 최종 업데이트합니다.
+        self.root.title("Markdown Converter v1.21") # 윈도우 창 좌측 상단에 표시될 프로그램의 버전 타이틀 문구를 최종 업데이트합니다.
         self.root.geometry("402x650") # 프로그램 창의 기본 가로 픽셀과 세로 픽셀 크기를 지정합니다.
         self.root.resizable(False, False) # 사용자가 마우스로 윈도우 창의 가로와 세로 크기를 임의로 늘리거나 줄일 수 없도록 잠금 처리합니다.
 
