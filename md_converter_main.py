@@ -13,7 +13,7 @@ class MDConverterApp:
     def __init__(self, root):
         # 그래픽 프로그램 창이 처음 생성될 때 실행되는 초기화 전용 생성자 함수입니다.
         self.root = root # 넘겨받은 메인 윈도우 인스턴스 객체를 클래스 전역에서 사용할 수 있도록 변수에 할당합니다.
-        self.root.title("Markdown Converter v1.22") # 윈도우 창 좌측 상단에 표시될 프로그램의 버전 타이틀 문구를 최종 업데이트합니다.
+        self.root.title("Markdown Converter v1.23") # 윈도우 창 좌측 상단에 표시될 프로그램의 버전 타이틀 문구를 최종 업데이트합니다.
         self.root.geometry("402x650") # 프로그램 창의 기본 가로 픽셀과 세로 픽셀 크기를 지정합니다.
         self.root.resizable(False, False) # 사용자가 마우스로 윈도우 창의 가로와 세로 크기를 임의로 늘리거나 줄일 수 없도록 잠금 처리합니다.
 
@@ -128,10 +128,19 @@ class MDConverterApp:
                     self.log_area.configure(state='disabled') # 창을 다시 잠급니다.
                 self.root.after(0, _update) # 숫자 지우기 및 쓰기 동작을 메인 스레드로 위임합니다.
 
+            def pdf_log(message):
+                # PDF 변환 종료 후 요약 로그를 출력하기 전에, 진행률 100% 표시 줄을 줄바꿈으로 먼저 끝내주는 전용 콜백 함수입니다.
+                def _newline(): # 진행률 줄 끝에 줄바꿈을 하나 넣는 메인 스레드 전용 함수입니다.
+                    self.log_area.configure(state='normal') # 텍스트 수정을 위해 잠금을 해제합니다.
+                    self.log_area.insert(tk.END, "\n") # 진행률 줄을 끝내고 다음 줄로 넘깁니다.
+                    self.log_area.configure(state='disabled') # 다시 읽기 전용으로 잠급니다.
+                self.root.after(0, _newline) # 줄바꿈 삽입을 메인 스레드 대기열에 먼저 넣습니다.
+                self.log(message) # 그다음 줄에 요약 메시지를 출력하도록 기존 로그 함수를 호출합니다.
+
             # 파일 확장자에 따라 알맞은 추출 모듈로 연결하는 제어 블록입니다.
             if ext_lower == '.pdf':
                 # PDF 모듈의 함수를 호출하여 마크다운 문자열을 반환받습니다.
-                markdown_content = extract_sequential_content(input_file, progress_callback=update_progress)
+                markdown_content = extract_sequential_content(input_file, progress_callback=update_progress, log_callback=pdf_log)
             elif ext_lower in ['.xlsx', '.xlsb']:
                 # 엑셀 확장자가 xlsx이거나 xlsb인 경우, 통합 엑셀 엔진 함수로 연결하여 마크다운 문자열을 반환받습니다.
                 markdown_content = extract_excel_content(input_file, progress_callback=update_progress)

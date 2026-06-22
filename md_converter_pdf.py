@@ -1,9 +1,26 @@
 import os # 운영체제 환경 변수를 설정하고 제어하기 위한 파이썬 내장 모듈을 가져옵니다.
+import re # cid 깨짐 문자열을 정규식으로 탐지하기 위한 내장 모듈을 가져옵니다.
 import warnings # 실행 중 발생하는 내부 경고 메시지를 필터링하기 위한 내장 모듈을 가져옵니다.
 import pdfplumber # PDF 문서 구조를 분석하고 데이터를 추출하기 위한 외부 라이브러리를 가져옵니다.
 
 os.environ["TQDM_DISABLE"] = "1" # 콘솔창 진행률 상태바 출력을 강제로 비활성화합니다.
 warnings.filterwarnings("ignore", category=UserWarning) # 내부 경고를 무시하도록 필터를 설정합니다.
+
+CID_PATTERN = re.compile(r'\(cid:\d+\)') # ToUnicode 정보가 없을 때 글자 대신 추출되는 (cid:숫자) 형태를 찾기 위한 정규식을 미리 컴파일합니다.
+CID_BROKEN_THRESHOLD = 0.3 # 한 페이지에서 cid가 차지하는 비율이 이 값을 넘으면 변환 불가 페이지로 판정하는 기준입니다.
+UNCONVERTIBLE_MARK = "[변환 불가 페이지]" # 글꼴 정보 누락으로 변환할 수 없는 페이지를 결과물에서 대체할 표기 문구입니다.
+
+def cid_ratio(text):
+    # 주어진 텍스트에서 cid로 깨진 문자가 차지하는 비율을 계산하는 함수를 정의합니다.
+    if not text: # 빈 텍스트라면.
+        return 0.0 # 비율을 0으로 반환합니다.
+    cid_chars = sum(len(m) for m in CID_PATTERN.findall(text)) # cid 토큰들이 차지하는 전체 글자 수를 합산합니다.
+    nonspace = len(re.sub(r'\s', '', text)) # 공백을 제외한 실제 글자 수를 셉니다.
+    return cid_chars / max(nonspace, 1) # cid 비율을 계산하여 반환합니다.
+
+def is_cid_broken(text):
+    # 텍스트가 cid 깨짐으로 판정될 만큼 cid 비율이 높은지 여부를 반환하는 함수를 정의합니다.
+    return cid_ratio(text) >= CID_BROKEN_THRESHOLD # 기준 비율 이상이면 참을 반환합니다.
 
 def is_inside(inner_bbox, outer_bbox, margin=5):
     # 첫 번째 좌표 영역이 두 번째 좌표 영역 안에 지정된 오차 범위 내로 포함되는지 검사하는 함수를 정의합니다.
@@ -67,14 +84,41 @@ def build_edge_settings(page, margin=3):
         "explicit_vertical_lines": synthetic_lines, # 양쪽 끝 보정용 가상 수직선 목록을 명시적으로 주입합니다.
     }
 
-def extract_sequential_content(pdf_path, progress_callback=None):
+def format_page_ranges(pages):
+    # 깨진 페이지 번호 리스트를 받아 연속 구간으로 압축한 문자열로 만드는 함수를 정의합니다.
+    if not pages: # 깨진 페이지가 하나도 없다면.
+        return "" # 빈 문자열을 반환합니다.
+    ordered = sorted(set(pages)) # 중복을 없애고 오름차순으로 정렬합니다.
+    ranges = [] # 압축된 구간들을 담을 리스트를 생성합니다.
+    start = prev = ordered[0] # 첫 페이지를 구간 시작과 직전 값으로 초기화합니다.
+    for p in ordered[1:]: # 두 번째 페이지부터 순회합니다.
+        if p == prev + 1: # 직전 페이지와 연속된다면.
+            prev = p # 구간 끝을 현재 페이지로 확장합니다.
+        else: # 연속이 끊겼다면.
+            ranges.append((start, prev)) # 지금까지의 구간을 저장합니다.
+            start = prev = p # 새 구간을 현재 페이지로 시작합니다.
+    ranges.append((start, prev)) # 마지막 구간을 저장합니다.
+    return ", ".join(f"{a}-{b}" if a != b else f"{a}" for a, b in ranges) # 각 구간을 'a-b' 또는 단일 'a' 형태로 이어 붙여 반환합니다.
+
+def extract_sequential_content(pdf_path, progress_callback=None, log_callback=None):
     # PDF 경로를 받아 텍스트와 표를 추출하고 마크다운 문자열로 반환하는 메인 추출 함수를 정의합니다.
     md_output = "" # 최종 결과물이 누적될 빈 텍스트 문자열을 초기화합니다.
+    broken_pages = [] # cid 깨짐으로 변환 불가 처리된 페이지 번호를 모아둘 리스트를 생성합니다.
     with pdfplumber.open(pdf_path) as pdf: # 전달받은 경로의 PDF 파일을 메모리에 엽니다.
         total_pages = len(pdf.pages) # 전체 페이지 개수를 세어 변수에 저장합니다.
         
         for i, page in enumerate(pdf.pages): # 첫 번째 페이지부터 마지막 페이지까지 순서대로 반복문을 실행합니다.
             page = page.dedupe_chars(tolerance=2) # 중복을 제거합니다.
+
+            page_text = page.extract_text() or "" # 페이지 전체 텍스트를 먼저 추출해 cid 깨짐 여부를 판정할 근거로 삼습니다.
+            if is_cid_broken(page_text): # 페이지 대부분이 글꼴 정보 누락으로 cid 깨짐 상태라면.
+                broken_pages.append(i + 1) # 사용자 안내용으로 1부터 시작하는 페이지 번호를 기록합니다.
+                md_output += UNCONVERTIBLE_MARK + "\n\n" # 표와 텍스트 추출을 건너뛰고 변환 불가 페이지 표기 한 줄로 대체합니다.
+                md_output += "---\n\n" # 페이지 구분용 수평선을 삽입합니다.
+                if progress_callback: # 콜백 함수가 있다면.
+                    progress_callback(int(((i + 1) / total_pages) * 100)) # 진행률을 갱신합니다.
+                continue # 이 페이지의 나머지 처리를 모두 건너뛰고 다음 페이지로 넘어갑니다.
+
             edge_settings = build_edge_settings(page) # 투명 테두리 보정용 표 탐지 설정을 생성합니다.
             all_tables = page.find_tables(edge_settings) if edge_settings else page.find_tables() # 보정 설정이 있다면 적용하고, 없다면 기본 방식으로 모든 표 객체를 탐색합니다.
             all_bboxes = [t.bbox for t in all_tables] # 테두리 좌표값만 별도로 뽑아내어 리스트를 만듭니다.
@@ -186,7 +230,7 @@ def extract_sequential_content(pdf_path, progress_callback=None):
                         _, target_keyword, _ = child_info[original_idx] # 키워드 문자열만 빼옵니다.
                         if target_keyword: # 빈 문자열이 아니라면 제목 라인을 출력합니다.
                             md_output += f"> **{target_keyword}** Details\n\n" # 제목을 누적 결과물에 추가합니다.
-                    
+
                     for row_idx, row in enumerate(table_data): # 가로행 단위로 순회합니다.
                         clean_row = [str(cv).replace('\n', '<br>').replace('|', '\\|').strip() if cv else "" for cv in row] # 문자열 치환을 일괄 수행합니다.
                         md_output += "| " + " | ".join(clean_row) + " |\n" # 마크다운 표의 한 줄을 완성하여 문자열에 추가합니다.
@@ -212,4 +256,8 @@ def extract_sequential_content(pdf_path, progress_callback=None):
                 current_percent = int(((i + 1) / total_pages) * 100) # 퍼센트를 산출합니다.
                 progress_callback(current_percent) # 정수 형태로 값을 전송합니다.
             
+    if log_callback and broken_pages: # 로그 콜백이 있고 변환 불가 페이지가 하나라도 있었다면.
+        summary = f"변환 불가 {len(broken_pages)}페이지: {format_page_ranges(broken_pages)}" # 깨진 페이지 수와 구간 요약 문구를 만듭니다.
+        log_callback(summary) # 변환이 끝난 뒤 요약을 한 번 전달합니다.
+
     return md_output # 최종 마크다운 문자열 덩어리를 호출자에게 반환합니다.
