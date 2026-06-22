@@ -27,7 +27,7 @@ Thumbs.db
 # --- etc ---
 py_history/
 md_Save/
-/tests/sample.pdf
+/tests/
 
 # --- Environment & Secrets ---
 .env
