@@ -19,14 +19,15 @@ def is_char_inside(char_obj, bbox):
     bx0, btop, bx1, bbottom = bbox # 대상 박스의 4개 좌표를 분리하여 할당합니다.
     return (bx0 <= cx <= bx1) and (btop <= cy <= bbottom) # 박스 경계선 내부에 들어오는지 확인하여 반환합니다.
 
-def get_safe_bbox(bbox, page_width, page_height):
-    # 추출 영역이 실제 PDF 페이지 크기를 벗어나지 않도록 좌표를 강제로 보정하는 함수를 정의합니다.
+def get_safe_bbox(bbox, page):
+    # 추출 영역이 실제 PDF 페이지 경계를 벗어나지 않도록 좌표를 강제로 보정하는 함수를 정의합니다.
+    page_x0, page_top, page_x1, page_bottom = page.bbox # 페이지가 원점에서 시작하지 않는 경우까지 대비해 실제 페이지 경계 좌표를 가져옵니다.
     x0, top, x1, bottom = bbox # 원본 좌표 4개를 분리하여 저장합니다.
-    x0 = max(0, min(x0, page_width)) # 너비 값으로 제한합니다.
-    top = max(0, min(top, page_height)) # 높이 값으로 제한합니다.
-    x1 = max(0, min(x1, page_width)) # 한계값 내에 맞춥니다.
-    bottom = max(0, min(bottom, page_height)) # 한계값 내에 맞춥니다.
-    
+    x0 = max(page_x0, min(x0, page_x1)) # 좌측 x좌표를 페이지 좌우 경계 내로 제한합니다.
+    x1 = max(page_x0, min(x1, page_x1)) # 우측 x좌표를 페이지 좌우 경계 내로 제한합니다.
+    top = max(page_top, min(top, page_bottom)) # 상단 y좌표를 페이지 상하 경계 내로 제한합니다.
+    bottom = max(page_top, min(bottom, page_bottom)) # 하단 y좌표를 페이지 상하 경계 내로 제한합니다.
+
     if x0 >= x1 or top >= bottom: # 면적이 0 이하의 비정상적인 상태가 되었는지 검사합니다.
         return None # None 객체를 반환합니다.
     return (x0, top, x1, bottom) # 최종 좌표를 튜플 형태로 묶어 반환합니다.
@@ -93,7 +94,7 @@ def extract_sequential_content(pdf_path, progress_callback=None):
                             if not cell: continue # 비어있다면 건너뜁니다.
                             
                             if is_inside(t_b.bbox, cell): # 특정 셀 안에 들어있는지 확인합니다.
-                                safe_cell = get_safe_bbox(cell, page.width, page.height) # 좌표를 보정합니다.
+                                safe_cell = get_safe_bbox(cell, page) # 좌표를 보정합니다.
                                 if safe_cell: # 정상적인 영역이라면 내부 로직을 실행합니다.
                                     cell_page = page.within_bbox(safe_cell) # 셀 영역만큼만 잘라냅니다.
                                     kw_text = cell_page.filter( # 객체들을 조건에 따라 필터링합니다.
@@ -110,7 +111,7 @@ def extract_sequential_content(pdf_path, progress_callback=None):
 
             indexed_tables = list(enumerate(all_tables)) # 튜플 리스트로 변환합니다.
             sorted_tables = sorted(indexed_tables, key=lambda x: x[1].bbox[1]) # 오름차순 정렬합니다.
-            last_y = 0 # 위치를 0으로 초기화합니다.
+            last_y = page.bbox[1] # 페이지가 원점에서 시작하지 않을 수 있으므로 실제 상단 좌표로 초기화합니다.
             
             parent_to_children = {} # 캐시용 딕셔너리를 생성합니다.
             for child_idx, data in child_info.items(): # 관계 딕셔너리를 순회합니다.
@@ -123,7 +124,7 @@ def extract_sequential_content(pdf_path, progress_callback=None):
                 current_top = table_obj.bbox[1] # 상단 Y좌표를 변수에 저장합니다.
                 
                 if current_top > last_y: # 일반 텍스트가 존재한다면.
-                    safe_area = get_safe_bbox((0, last_y, page.width, current_top), page.width, page.height) # 좌표를 보정합니다.
+                    safe_area = get_safe_bbox((page.bbox[0], last_y, page.bbox[2], current_top), page) # 좌표를 보정합니다.
                     if safe_area: # 정상이라면 텍스트 추출을 시작합니다.
                         clean_text = page.within_bbox(safe_area).filter( # 필터를 적용합니다.
                             lambda o: o.get("object_type") != "char" or \
@@ -144,7 +145,7 @@ def extract_sequential_content(pdf_path, progress_callback=None):
                                 row_data.append("") # 빈 문자열을 추가합니다.
                                 continue # 다음 칸으로 넘어갑니다.
 
-                            safe_cell_bbox = get_safe_bbox(cell_bbox, page.width, page.height) # 좌표가 안전한지 검사하고 보정합니다.
+                            safe_cell_bbox = get_safe_bbox(cell_bbox, page) # 좌표가 안전한지 검사하고 보정합니다.
                             if safe_cell_bbox: # 정상적으로 보정된 셀 좌표라면 추출을 시작합니다.
                                 cell_page = page.within_bbox(safe_cell_bbox) # 해당 셀 크기만큼만 오려냅니다.
                                 contained_children = [child for child in my_children if is_inside(child[1], cell_bbox, margin=10)] # 자식 표가 들어있는지 검사합니다.
@@ -195,8 +196,8 @@ def extract_sequential_content(pdf_path, progress_callback=None):
 
                 last_y = max(last_y, table_obj.bbox[3]) # 마지막 Y좌표를 현재 표의 맨 밑바닥 좌표로 갱신합니다.
 
-            if last_y < page.height: # 하단에 남은 여백 공간이 있다면 검사합니다.
-                safe_final = get_safe_bbox((0, last_y, page.width, page.height), page.width, page.height) # 좌표를 안전하게 보정합니다.
+            if last_y < page.bbox[3]: # 하단에 남은 여백 공간이 있다면 검사합니다.
+                safe_final = get_safe_bbox((page.bbox[0], last_y, page.bbox[2], page.bbox[3]), page) # 좌표를 안전하게 보정합니다.
                 if safe_final: # 정상이라면 텍스트 추출을 시작합니다.
                     final_text = page.within_bbox(safe_final).filter( # 객체 필터를 적용합니다.
                         lambda o: o.get("object_type") != "char" or \
