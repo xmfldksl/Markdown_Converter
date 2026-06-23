@@ -2,7 +2,7 @@
 
 ## Overview
 
-This Python-based tool converts PDF, Excel (.xlsx, .xlsb), and PowerPoint (.pptx) documents into structured Markdown format. It is designed to preserve text hierarchies and complex table layouts, specifically focusing on handling large datasets and extracting nested tables into a readable Markdown structure.
+This Python-based tool converts PDF, Excel (.xlsx, .xlsb), and PowerPoint (.pptx) documents into structured Markdown format. It is designed to preserve text hierarchies and complex table layouts, specifically focusing on handling large datasets and extracting nested tables into an AI-readable Markdown structure.
 
 ## Key Technical Features
 
@@ -63,15 +63,15 @@ python md_converter_main.py
   * **Excel Integration:** Added support for standard `.xlsx` and binary `.xlsb` files using streaming and chunking methods.
   * **PowerPoint Integration:** Added support for extracting text and tables directly from `.pptx` slides.
   * **UI/UX Enhancement:** Unified UI to support multiple formats dynamically and improved progress tracking.
-  * **Performance Optimization:** Distributed deployment with an `_internal` folder architecture to prevent launch delays and maximize UI responsiveness.
-
+ 
 ### v1.1
 
   * **PDF to Markdown Conversion:** First public release converting PDF text and tables into structured Markdown.
   * **Text Deduplication:** Applied `dedupe_chars(tolerance=2)` to fix duplicate text issues.
   * **Table Security:** Escaped vertical bars (`|`) in cells to prevent Markdown table breakage.
   * **Stability:** Implemented `get_safe_bbox` to prevent out-of-bound coordinate errors.
-  * **UI/UX:** Added real-time logging and multi-threading for a smoother conversion experience.
+  * **UI/UX:** Added a real-time progress indicator for a smoother conversion experience.
+  * **Performance Optimization:** Distributed deployment with an `_internal` folder architecture to prevent launch delays and maximize UI responsiveness.
 
 ## Limitations
 
@@ -92,7 +92,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 개요
 
-이 프로젝트는 PDF, 엑셀(.xlsx, .xlsb), 파워포인트(.pptx) 문서를 구조화된 Markdown 형식으로 변환하는 파이썬 기반 도구입니다. 텍스트 계층 구조와 복잡한 표 레이아웃을 보존하며, 대용량 데이터 처리와 중첩된 표를 읽기 쉬운 마크다운 구조로 재구성하는 데 특화되어 있습니다.
+이 프로젝트는 PDF, 엑셀(.xlsx, .xlsb), 파워포인트(.pptx) 문서를 구조화된 Markdown 형식으로 변환하는 파이썬 기반 도구입니다. 텍스트 계층 구조와 복잡한 표 레이아웃을 보존하며, 대용량 데이터 처리와 중첩된 표를 AI가 읽기 쉬운 마크다운 구조로 재구성하는 데 특화되어 있습니다.
 
 ## 주요 기술 특징
 
@@ -153,7 +153,6 @@ python md_converter_main.py
   * **엑셀 지원 추가:** `.xlsx` 및 `.xlsb` 바이너리 파일 변환 기능이 추가되었습니다.
   * **파워포인트 지원 추가:** `.pptx` 슬라이드 내부 텍스트 및 표 추출 기능이 추가되었습니다.
   * **UI/UX 개선:** 여러 확장자를 처리할 수 있도록 메인 화면이 개편되었으며 진행률 연동이 최적화되었습니다.
-  * **구동 성능 최적화:** `_internal` 폴더 분리형 배포 구조를 채택하여, 실행 초기 지연 현상을 차단하고 프로그램 응답 속도를 최대화했습니다.
 
 ### v1.1
 
@@ -161,7 +160,8 @@ python md_converter_main.py
   * **텍스트 중복 제거:** `dedupe_chars(tolerance=2)`를 적용해 글자 중복 문제를 해결했습니다.
   * **표 깨짐 방지:** 셀 안의 세로 막대(`|`)를 이스케이프 처리해 마크다운 표가 깨지는 것을 막았습니다.
   * **안정성:** `get_safe_bbox`를 구현해 좌표 범위 초과 오류를 방지했습니다.
-  * **UI/UX:** 실시간 로깅과 멀티스레딩을 추가해 변환 과정을 매끄럽게 했습니다.
+  * **UI/UX:** 실시간 로깅을 추가해 변환 과정을 매끄럽게 보여주도록 했습니다.
+  * **구동 성능 최적화:** `_internal` 폴더 분리형 배포 구조를 채택하여, 실행 초기 지연 현상을 차단하고 프로그램 응답 속도를 최대화했습니다.
 
 ## 제한 사항
 
